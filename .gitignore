@@ -1,1 +1,43 @@
+# Python virtual environment
 .venv
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Logs and conversion output
+logs/
+*.log
+
+# Audio files (for testing)
+*.wma
+*.WMA
+*.mp3
+*.MP3
+
+# Test directories
+wma/
+mp3/
+test/
+output/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+.*.swp

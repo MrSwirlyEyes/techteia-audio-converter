@@ -1,0 +1,31 @@
+# WMA to MP3 Converter - Python Dependencies
+# ============================================
+#
+# This project uses ONLY Python standard library modules.
+# No external packages need to be installed via pip.
+#
+# Standard library modules used:
+#   - argparse      (command-line argument parsing)
+#   - csv           (CSV manifest generation)
+#   - json          (FFprobe output parsing)
+#   - logging       (structured logging)
+#   - os            (OS interface)
+#   - pathlib       (path manipulation)
+#   - shutil        (disk space checking)
+#   - subprocess    (FFmpeg/FFprobe execution)
+#   - sys           (system-specific functions)
+#   - datetime      (timestamps)
+#   - typing        (type hints)
+#
+# External dependencies (installed via system package manager):
+#   - FFmpeg with libmp3lame support
+#     Install on macOS: brew install ffmpeg
+#
+# Python version requirement:
+#   - Python 3.9.6 or higher
+#
+# To set up the virtual environment (optional but recommended):
+#   python3 -m venv .venv
+#   source .venv/bin/activate
+#
+# No pip install needed - all modules are built-in!
