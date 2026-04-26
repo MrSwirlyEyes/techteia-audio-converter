@@ -14,17 +14,42 @@ __pycache__/
 logs/
 *.log
 
-# Audio files (for testing)
+# Audio files
 *.wma
 *.WMA
 *.mp3
 *.MP3
+*.flac
+*.FLAC
+*.wav
+*.WAV
+*.aac
+*.AAC
+*.ogg
+*.OGG
+*.m4a
+*.M4A
+*.opus
+*.OPUS
+*.ape
+*.APE
+*.aiff
+*.AIFF
+*.wv
+*.WV
+*.ac3
+*.AC3
+*.dts
+*.DTS
+*.alac
+*.ALAC
 
-# Test directories
+# Input / output / test directories
+input/
+output/
 wma/
 mp3/
 test/
-output/
 
 # macOS
 .DS_Store

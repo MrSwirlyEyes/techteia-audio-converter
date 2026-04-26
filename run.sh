@@ -12,7 +12,7 @@ set -euo pipefail
 # ── Configuration ──────────────────────────────────────────────────────────────
 # EDIT THESE PATHS TO MATCH YOUR SETUP:
 
-SOURCE_DIR="./wma"     # Directory containing your .wma files
+SOURCE_DIR="./input"   # Directory containing your source audio files
 OUTPUT_DIR=""          # Output directory (leave empty to use ./output default)
 
 # ───────────────────────────────────────────────────────────────────────────────
