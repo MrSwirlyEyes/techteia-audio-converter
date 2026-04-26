@@ -5,7 +5,7 @@
 ; Then compile this script with Inno Setup to produce the installer .exe.
 
 #define AppName      "Techteia Audio Converter"
-#define AppVersion   "1.0.8"
+#define AppVersion   "1.1.0"
 #define AppPublisher "Techteia"
 #define AppExeName   "Techteia Audio Converter.exe"
 #define AppExeDir    ".\dist\Techteia Audio Converter"
@@ -19,6 +19,7 @@ AppSupportURL=https://techteia.com
 VersionInfoVersion={#AppVersion}
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
+SetupIconFile=icon.ico
 UninstallDisplayIcon={app}\{#AppExeName}
 UninstallDisplayName={#AppName}
 OutputDir=.

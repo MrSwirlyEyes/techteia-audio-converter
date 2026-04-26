@@ -50,8 +50,8 @@ echo [OK] FFmpeg binaries ready.
 echo.
 
 :: Step 4: Install build dependencies
-echo Installing pyinstaller and customtkinter...
-!PYTHON! -m pip install pyinstaller customtkinter --upgrade --quiet
+echo Installing pyinstaller, customtkinter, and Pillow...
+!PYTHON! -m pip install pyinstaller customtkinter pillow --upgrade --quiet
 if errorlevel 1 (
     echo  ERROR: pip install failed.
     pause & exit /b 1
@@ -75,8 +75,11 @@ cd /d "%ROOT%"
   --name "Techteia Audio Converter" ^
   --distpath "%DIST%" ^
   --workpath "%BUILD%" ^
+  --icon "icon.ico" ^
   --add-binary "ffmpeg\ffmpeg.exe;ffmpeg" ^
   --add-binary "ffmpeg\ffprobe.exe;ffmpeg" ^
+  --add-data "icon.ico;." ^
+  --add-data "logo.png;." ^
   --hidden-import customtkinter ^
   gui.py
 
@@ -88,38 +91,33 @@ if errorlevel 1 (
 echo.
 echo [OK] Executable built: %DIST%Techteia Audio Converter\
 
-:: Step 6: Run Inno Setup if found
+:: Step 6: Install Inno Setup if needed, then compile installer
 echo.
-set "ISCC="
-if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" set "ISCC=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-if exist "C:\Program Files\Inno Setup 6\ISCC.exe"       set "ISCC=C:\Program Files\Inno Setup 6\ISCC.exe"
-
-if not "!ISCC!"=="" (
-    echo Inno Setup found. Compiling installer...
-    "!ISCC!" "%~dp0techteia.iss"
-    if errorlevel 1 (
-        echo  WARNING: Inno Setup compile failed. Build the installer manually.
-    ) else (
-        echo.
-        echo ============================================================
-        echo   SUCCESS!
-        echo   Installer: %~dp0TechteiaAudioConverter_Setup_v1.0.8.exe
-        echo   Send this .exe file to grandma -- that is all she needs!
-        echo ============================================================
-    )
-) else (
-    echo ============================================================
-    echo   Executable built successfully.
-    echo.
-    echo   NEXT: Create the installer
-    echo   1. Install Inno Setup from https://jrsoftware.org/isinfo.php
-    echo   2. Re-run this script (it will compile automatically),
-    echo      OR open installer\techteia.iss and press Ctrl+F9.
-    echo.
-    echo   Output: installer\TechteiaAudioConverter_Setup_v1.0.8.exe
-    echo   That .exe is what grandma double-clicks to install the app.
-    echo ============================================================
+call :find_innosetup
+if "!ISCC!"=="" (
+    echo Inno Setup not found. Installing automatically...
+    call :install_innosetup
+    call :find_innosetup
 )
+if "!ISCC!"=="" (
+    echo  ERROR: Could not install Inno Setup automatically.
+    echo  Download manually from https://jrsoftware.org/isinfo.php
+    pause & exit /b 1
+)
+
+echo Compiling installer with Inno Setup...
+"!ISCC!" "%~dp0techteia.iss"
+if errorlevel 1 (
+    echo  ERROR: Inno Setup compile failed. See output above.
+    pause & exit /b 1
+)
+
+echo.
+echo ============================================================
+echo   SUCCESS!
+echo   Installer: %~dp0TechteiaAudioConverter_Setup_v1.1.0.exe
+echo   Send this .exe file to grandma -- that is all she needs!
+echo ============================================================
 
 echo.
 pause
@@ -129,6 +127,32 @@ exit /b 0
 :: ---------------------------------------------------------------------------
 :: Subroutines
 :: ---------------------------------------------------------------------------
+
+:find_innosetup
+set "ISCC="
+if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" set "ISCC=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+if exist "C:\Program Files\Inno Setup 6\ISCC.exe"       set "ISCC=C:\Program Files\Inno Setup 6\ISCC.exe"
+exit /b 0
+
+
+:install_innosetup
+where winget >nul 2>&1
+if not errorlevel 1 (
+    echo Trying winget...
+    winget install JRSoftware.InnoSetup --silent --accept-source-agreements --accept-package-agreements
+    if not errorlevel 1 exit /b 0
+)
+
+echo Downloading Inno Setup installer...
+set "IS_URL=https://jrsoftware.org/download.php/is.exe"
+set "IS_DL=%TEMP%\innosetup_installer.exe"
+powershell -NoProfile -Command "Invoke-WebRequest -Uri '%IS_URL%' -OutFile '%IS_DL%' -UseBasicParsing"
+if not exist "%IS_DL%" ( echo  Download failed. & exit /b 1 )
+
+echo Installing Inno Setup silently...
+"%IS_DL%" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+del /q "%IS_DL%" 2>nul
+exit /b 0
 
 :find_python
 :: Check well-known install paths FIRST so we never accidentally pick up the

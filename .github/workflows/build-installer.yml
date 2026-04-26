@@ -18,7 +18,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install Python dependencies
-        run: pip install pyinstaller customtkinter
+        run: pip install pyinstaller customtkinter pillow
 
       - name: Download FFmpeg
         shell: pwsh
@@ -42,8 +42,11 @@ jobs:
           --name "Techteia Audio Converter"
           --distpath dist
           --workpath build
+          --icon "icon.ico"
           --add-binary "ffmpeg\ffmpeg.exe;ffmpeg"
           --add-binary "ffmpeg\ffprobe.exe;ffmpeg"
+          --add-data "icon.ico;."
+          --add-data "logo.png;."
           --hidden-import customtkinter
           gui.py
 

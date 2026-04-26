@@ -16,6 +16,7 @@ from tkinter import filedialog, messagebox
 import io
 
 import customtkinter as ctk
+from PIL import Image
 
 # Suppress console windows spawned by ffmpeg/ffprobe on Windows
 _NO_WINDOW: dict = (
@@ -43,6 +44,14 @@ def _setup_ffmpeg_path() -> None:
             return
 
 _setup_ffmpeg_path()
+
+def _get_asset(name: str) -> Path:
+    if getattr(sys, "frozen", False):
+        base = Path(sys.executable).parent
+        for candidate in [base / name, base / "_internal" / name]:
+            if candidate.exists():
+                return candidate
+    return Path(__file__).parent / name
 
 def _check_ffmpeg() -> bool:
     """Return True if ffmpeg is callable, show a friendly error and exit if not."""
@@ -84,7 +93,7 @@ from convert import (   # noqa: E402  (import after PATH is set)
 # ── Constants ──────────────────────────────────────────────────────────────────
 
 APP_NAME    = "Techteia Audio Converter"
-APP_VERSION = "1.0.8"
+APP_VERSION = "1.1.0"
 WIN_W, WIN_H = 740, 820
 FORMAT_OPTIONS  = sorted(CODEC_MAP.keys())
 DEFAULT_FORMAT  = "mp3"
@@ -92,12 +101,13 @@ DEFAULT_FORMAT  = "mp3"
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
 
-BRAND_BLUE   = "#1a6faf"
-BRAND_HOVER  = "#155a8a"
-BRAND_HEADER = "#d0e8f8"
+BRAND_DARK        = "#1C1710"   # header background
+BRAND_GOLD        = "#C9A84C"   # primary gold (buttons, accents)
+BRAND_GOLD_HOVER  = "#A88B3A"   # darker gold for hover
+BRAND_GOLD_LIGHT  = "#F0DFA0"   # light gold for subtitle text on dark bg
 GREEN  = "#27ae60"
 RED    = "#c0392b"
-BLUE   = "#2980b9"
+GOLD   = BRAND_GOLD             # re-use brand gold for "Copied" stat
 
 
 # ── Conversion worker ──────────────────────────────────────────────────────────
@@ -319,6 +329,11 @@ class App(ctk.CTk):
         self.minsize(580, 700)
         self.resizable(True, True)
 
+        # Window icon (taskbar + title bar)
+        ico = _get_asset("icon.ico")
+        if ico.exists() and sys.platform == "win32":
+            self.iconbitmap(str(ico))
+
         self._worker: ConversionWorker | None = None
         self._queue:  queue.Queue = queue.Queue()
         self._running = False
@@ -332,21 +347,35 @@ class App(ctk.CTk):
         self.grid_rowconfigure(1, weight=1)
 
         # Header
-        hdr = ctk.CTkFrame(self, corner_radius=0, fg_color=BRAND_BLUE)
+        hdr = ctk.CTkFrame(self, corner_radius=0, fg_color=BRAND_DARK)
         hdr.grid(row=0, column=0, sticky="ew")
-        hdr.grid_columnconfigure(0, weight=1)
+        hdr.grid_columnconfigure(1, weight=1)
+
+        # Logo
+        logo_path = _get_asset("logo.png")
+        if logo_path.exists():
+            logo_img = ctk.CTkImage(
+                light_image=Image.open(logo_path),
+                dark_image=Image.open(logo_path),
+                size=(72, 72),
+            )
+            ctk.CTkLabel(hdr, image=logo_img, text="").grid(
+                row=0, column=0, rowspan=2, padx=(20, 8), pady=14,
+            )
 
         ctk.CTkLabel(
             hdr, text=APP_NAME,
             font=ctk.CTkFont(size=24, weight="bold"),
             text_color="white",
-        ).grid(row=0, column=0, padx=24, pady=(18, 2))
+            anchor="w",
+        ).grid(row=0, column=1, sticky="sw", padx=(4, 24), pady=(18, 0))
 
         ctk.CTkLabel(
             hdr, text="Convert your music and audio files — quickly and easily",
             font=ctk.CTkFont(size=13),
-            text_color=BRAND_HEADER,
-        ).grid(row=1, column=0, padx=24, pady=(0, 16))
+            text_color=BRAND_GOLD_LIGHT,
+            anchor="w",
+        ).grid(row=1, column=1, sticky="nw", padx=(4, 24), pady=(0, 16))
 
         # Scrollable content
         scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
@@ -432,7 +461,8 @@ class App(ctk.CTk):
         self.convert_btn = ctk.CTkButton(
             f_btn, text="▶   Convert", height=56,
             font=ctk.CTkFont(size=20, weight="bold"),
-            fg_color=BRAND_BLUE, hover_color=BRAND_HOVER,
+            fg_color=BRAND_GOLD, hover_color=BRAND_GOLD_HOVER,
+            text_color=BRAND_DARK,
             command=self._start_conversion,
         )
         self.convert_btn.grid(row=0, column=0, sticky="ew", padx=(0, 10))
@@ -464,7 +494,8 @@ class App(ctk.CTk):
                 f_prog, text=lbl_text, font=ctk.CTkFont(size=13),
                 width=55, anchor="e",
             ).grid(row=row, column=0, padx=(0, 10), pady=4)
-            pb = ctk.CTkProgressBar(f_prog, height=20, corner_radius=8)
+            pb = ctk.CTkProgressBar(f_prog, height=20, corner_radius=8,
+                                     progress_color=BRAND_GOLD)
             pb.grid(row=row, column=1, sticky="ew", pady=4)
             pb.set(0)
             setattr(self, attr, pb)
@@ -487,16 +518,16 @@ class App(ctk.CTk):
         # ── Summary (hidden until done) ────────────────────────────────────────
         self.summary_frame = ctk.CTkFrame(
             scroll, corner_radius=12,
-            fg_color=("#f0f7ff", "#f0f7ff"),
-            border_width=1, border_color="#b3d4f0",
+            fg_color=("#fdf8ee", "#fdf8ee"),
+            border_width=1, border_color=BRAND_GOLD,
         )
         self.summary_frame.grid(row=14, column=0, sticky="ew", padx=24, pady=(0, 28))
         self.summary_frame.grid_columnconfigure((0, 1, 2), weight=1)
         self.summary_frame.grid_remove()
 
-        self._sum_converted = self._stat_cell(self.summary_frame, "✓", "Converted", GREEN, 0)
-        self._sum_copied    = self._stat_cell(self.summary_frame, "↓", "Copied",    BLUE,  1)
-        self._sum_failed    = self._stat_cell(self.summary_frame, "✗", "Failed",    RED,   2)
+        self._sum_converted = self._stat_cell(self.summary_frame, "✓", "Converted", GREEN,     0)
+        self._sum_copied    = self._stat_cell(self.summary_frame, "↓", "Copied",    BRAND_GOLD, 1)
+        self._sum_failed    = self._stat_cell(self.summary_frame, "✗", "Failed",    RED,        2)
 
     def _section(self, parent, text: str, row: int):
         ctk.CTkLabel(
