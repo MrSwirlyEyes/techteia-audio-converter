@@ -44,6 +44,14 @@ logs/
 *.alac
 *.ALAC
 
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+
+# Bundled FFmpeg binaries (place manually — see installer/README.md)
+installer/ffmpeg/
+
 # Input / output / test directories
 input/
 output/

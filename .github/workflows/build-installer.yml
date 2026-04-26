@@ -1,0 +1,62 @@
+name: Build Windows Installer
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: pip install pyinstaller customtkinter
+
+      - name: Download FFmpeg
+        shell: pwsh
+        run: |
+          $zip = "$env:TEMP\ffmpeg.zip"
+          $tmp = "$env:TEMP\ffmpeg_extracted"
+          Invoke-WebRequest `
+            -Uri "https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-gpl.zip" `
+            -OutFile $zip -UseBasicParsing
+          Expand-Archive -Path $zip -DestinationPath $tmp -Force
+          New-Item -ItemType Directory -Force -Path installer\ffmpeg | Out-Null
+          Get-ChildItem -Recurse $tmp -Filter ffmpeg.exe  | Copy-Item -Destination installer\ffmpeg\
+          Get-ChildItem -Recurse $tmp -Filter ffprobe.exe | Copy-Item -Destination installer\ffmpeg\
+
+      - name: Build with PyInstaller
+        working-directory: installer
+        run: >-
+          python -m PyInstaller
+          --onedir
+          --windowed
+          --name "Techteia Audio Converter"
+          --distpath dist
+          --workpath build
+          --add-binary "ffmpeg\ffmpeg.exe;ffmpeg"
+          --add-binary "ffmpeg\ffprobe.exe;ffmpeg"
+          --hidden-import customtkinter
+          gui.py
+
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+
+      - name: Compile installer
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\techteia.iss'
+        shell: pwsh
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: TechteiaAudioConverter-Setup
+          path: installer\TechteiaAudioConverter_Setup_v*.exe
+          if-no-files-found: error

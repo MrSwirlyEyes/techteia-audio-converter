@@ -1,0 +1,6 @@
+# GUI dependencies
+# Install with: pip install -r requirements-gui.txt
+customtkinter>=5.2.0
+
+# For building the Windows installer (dev only — not needed to run the GUI)
+# pip install pyinstaller

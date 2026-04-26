@@ -39,6 +39,12 @@ from pathlib import Path
 from typing import Optional
 
 
+# Suppress console windows when spawning subprocesses from a GUI app on Windows
+_NO_WINDOW: dict = (
+    {"creationflags": subprocess.CREATE_NO_WINDOW}
+    if sys.platform == "win32" else {}
+)
+
 # ── Constants ──────────────────────────────────────────────────────────────────
 
 DEFAULT_OUTPUT_FORMAT: str = "mp3"
@@ -110,7 +116,7 @@ def check_ffmpeg(output_format: str) -> None:
     try:
         result = subprocess.run(
             ["ffmpeg", "-encoders"],
-            capture_output=True, text=True, check=True
+            capture_output=True, text=True, check=True, **_NO_WINDOW
         )
         if required_codec and required_codec not in result.stdout:
             sys.exit(
@@ -135,12 +141,13 @@ def get_audio_properties(file_path: Path) -> dict:
                 "-print_format", "json",
                 "-show_streams",
                 "-show_format",
-                "-select_streams", "a:0",  # First audio stream only
+                "-select_streams", "a:0",
                 str(file_path)
             ],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
+            **_NO_WINDOW
         )
         data = json.loads(result.stdout)
         streams = data.get("streams", [])
@@ -189,7 +196,8 @@ def validate_output(output_path: Path, logger: logging.Logger) -> dict:
             ],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
+            **_NO_WINDOW
         )
         data = json.loads(probe_result.stdout)
 
@@ -440,7 +448,7 @@ def convert_file(
     start_time = datetime.now()
 
     try:
-        proc_result = subprocess.run(cmd, capture_output=True, text=True)
+        proc_result = subprocess.run(cmd, capture_output=True, text=True, **_NO_WINDOW)
         conversion_time = (datetime.now() - start_time).total_seconds()
         result["conversion_time"] = conversion_time
 
